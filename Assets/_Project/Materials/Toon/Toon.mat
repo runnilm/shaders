@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Toon
-  m_Shader: {fileID: -6465566751694194690, guid: 0bf721695359224448e7f28f3bc4ed87,
+  m_Shader: {fileID: -6465566751694194690, guid: e77111046b851ae47b57003f367ef054,
     type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -117,8 +117,8 @@ Material:
     - _AOToonShadingEnabled: 1
     - _AdditionalLightToonShadingEnabled: 1
     - _AdditionalLightToonShadingThreshold: 0.1
-    - _AlphaClip: 0
-    - _AlphaClipThreshold: 0
+    - _AlphaClip: 1
+    - _AlphaClipThreshold: 0.5
     - _AlphaToMask: 0
     - _AmbientLightStrength: 1
     - _Blend: 0
@@ -137,6 +137,7 @@ Material:
     - _Emissive: 0
     - _EnvironmentReflections: 1
     - _Fallof_Size: 0.05
+    - _Falloff_Size: 0.05
     - _FogEnabled: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -151,7 +152,7 @@ Material:
     - _Parallax: 0.005
     - _QueueControl: -1
     - _QueueOffset: 0
-    - _ReceiveAdditionalLights: 0
+    - _ReceiveAdditionalLights: 1
     - _ReceiveShadows: 1
     - _RimLightingEnabled: 0
     - _RimThreshold: 0.85

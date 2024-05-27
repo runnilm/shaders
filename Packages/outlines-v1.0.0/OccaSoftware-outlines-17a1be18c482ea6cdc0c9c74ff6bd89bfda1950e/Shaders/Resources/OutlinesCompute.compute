@@ -1,0 +1,616 @@
+#pragma kernel ComputeOutlines
+#pragma kernel DrawOutlines
+#pragma exclude_renderers gles3
+
+
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
+
+
+// User Data
+
+float _DepthThreshold;
+float _DepthSoftness;
+float _DepthThickness01;
+
+float _NormalThreshold;
+float _NormalSoftness;
+float _NormalThickness01;
+
+float _LumaThreshold;
+float _LumaSoftness;
+float _LumaThickness01;
+
+float _ColorThreshold;
+float _ColorSoftness;
+float _ColorThickness01;
+
+float4 _OutlineColor;
+float _NearThickness01;
+float _FarThickness01;
+
+float _NearAlpha;
+float _FarAlpha;
+
+float _UseDepth;
+float _UseNormals;
+
+float _DistanceStart;
+float _DistanceEnd;
+
+float _GrazingAngleThreshold;
+float _GrazingAngleOffset;
+
+float _EdgeThreshold;
+
+Texture2D<float3> _OffsetTexture;
+
+float _TextureSpeed;
+float _TextureScale;
+float _TextureOffset;
+
+float _PreviewOutlines;
+
+// Input Variables
+
+Texture2D<float3> _ScreenTexture;
+Texture2D<float3> toonkit_AlbedoTexture;
+
+RWTexture2D<float> _OutlineTarget;
+Texture2D<float> _OutlineTargetResource;
+RWTexture2D<float3> _OutlineDrawTarget;
+
+SamplerState my_point_clamp_sampler;
+SamplerState my_linear_clamp_sampler;
+SamplerState my_linear_repeat_sampler;
+SamplerState my_linear_mirror_sampler;
+
+float _FrameId;
+
+float4 _ScreenSizePx; // xy = resolution, zw = rcp(resolution)
+
+#define _ThreadSize 8
+
+float2 GetUV (uint3 id) 
+{
+	return (id.xy + 0.5) * _ScreenSizePx.zw;
+}
+
+float2 GetUV(uint3 id, float2 texelSize)
+{
+    return (id.xy + 0.5) * texelSize;
+}
+
+float2 GetTexelSize()
+{
+    return 1.0 * _ScreenSizePx.zw;
+}
+
+
+float ColorRGBToLuma(float3 color)
+{
+  return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+}
+
+
+// Calculate the remainder (use sign of y).
+float mod(float x, float y)
+{
+  return x - y * floor(x / y);
+}
+
+float3 ColorRGBToHSV(float3 color)
+{
+  float3 hsv;
+  float maxColor = max(color.r, max(color.g, color.b));
+  float minColor = min(color.r, min(color.g, color.b));
+  
+  
+  /////////////////////////
+  // Calculate Value
+  /////////////////////////
+  hsv.z = maxColor;
+
+  
+  /////////////////////////
+  // Calculate Saturation
+  /////////////////////////
+  float chroma = maxColor - minColor;
+  hsv.y = chroma / maxColor; // saturation
+
+  
+  /////////////////////////
+  // Calculate Hue
+  /////////////////////////
+  
+  hsv.x = 0;
+  // if red is strongest...
+  float inverseChroma = rcp(chroma);
+  float denom = rcp(6.0);
+  if (color.r > color.g && color.r > color.b)
+  {
+    hsv.x = (0.0 + (color.g - color.b) * inverseChroma) * denom;
+  }
+  // if green is strongest...
+  else if (color.g > color.b)
+  {
+    hsv.x = (2.0 + (color.b - color.r) * inverseChroma)  * denom;
+  }
+  // if blue is strongest...
+  else
+  {
+    hsv.x = (4.0 + (color.r - color.g) * inverseChroma)  * denom;
+  }
+  
+  hsv.x = mod(hsv.x, 1.0);
+  
+  return hsv;
+}
+
+
+// Unity typically shows using UNITY_I_VP, 
+// but that matrix is unreliable in Compute, 
+// so we normally our own in the Render Pass.
+// That's simply (proj * view).inverse.
+float4 os_DepthToViewParams;
+
+float os_LinearEyeDepth(float rawDepth, float4 zBufferParam)
+{
+  return 1.0 / (zBufferParam.z * rawDepth + zBufferParam.w);
+}
+
+
+float3 GetPositionViewSpace(float2 uv, float rawDepth)
+{
+  float linearDepth = os_LinearEyeDepth(rawDepth, _ZBufferParams);
+  return float3((uv * os_DepthToViewParams.xy - os_DepthToViewParams.zw) * linearDepth, linearDepth);
+}
+
+float3 GetPositionWorldSpace(float3 positionVS)
+{
+  return mul(unity_CameraToWorld, float4(positionVS, 1)).xyz;
+}
+
+// Note: must use _LOD variant in Compute Shader.
+float SampleDepth(float2 uv)
+{
+  return SAMPLE_TEXTURE2D_X_LOD(_CameraDepthTexture, my_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv), 0).r;
+}
+
+float SampleDepthPoint(float2 uv)
+{
+  return SAMPLE_TEXTURE2D_X_LOD(_CameraDepthTexture, my_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv), 0).r;
+}
+
+#pragma multi_compile _ _GBUFFER_NORMALS_OCT
+
+// Note: must use _LOD variant in Compute Shader.
+float3 SampleNormals(float2 uv)
+{
+  float3 normal = SAMPLE_TEXTURE2D_X_LOD(_CameraNormalsTexture, my_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv), 0).xyz;
+
+#if defined(_GBUFFER_NORMALS_OCT)
+    float2 remappedOctNormalWS = Unpack888ToFloat2(normal); // values between [ 0,  1]
+    float2 octNormalWS = remappedOctNormalWS.xy * 2.0 - 1.0;    // values between [-1, +1]
+    normal = UnpackNormalOctQuadEncode(octNormalWS);
+#endif
+
+  return normal;
+}
+
+float3 SampleColor(float2 uv)
+{
+  return SAMPLE_TEXTURE2D_X_LOD(_ScreenTexture, my_linear_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv), 0).xyz;
+}
+
+float SampleLuma(float2 uv)
+{
+  return ColorRGBToLuma(SampleColor(uv));
+}
+
+float2 SampleHueSaturation(float2 uv)
+{
+  return ColorRGBToHSV(SampleColor(uv)).xy;
+}
+
+// Returns % between start and stop
+float InverseLerp_HyV(float start, float stop, float value)
+{
+  float x = (value - start) / (stop - start);
+  return saturate(x);
+}
+
+float Remap_HyV(float inStart, float inStop, float outStart, float outStop, float v)
+{
+  float t = InverseLerp_HyV(inStart, inStop, v);
+  return lerp(outStart, outStop, saturate(t));
+}
+
+
+// Source: https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
+float IGN(int pixelX, int pixelY, uint frameId)
+{
+    #define FRAME_REPEAT_RATE 64
+    #define OFFSET 5.588238
+    float3 magic = float3( 0.06711056, 0.00583715, 52.9829189 );
+    
+    float frame = frameId % FRAME_REPEAT_RATE;
+    float x = float(pixelX) + OFFSET * frame;
+    float y = float(pixelY) + OFFSET * frame;
+    
+    float f = magic.x * x + magic.y * y;
+    return frac(magic.z * frac(f));
+}
+
+
+
+float GetFresnel(float3 normal, float3 view, float strength)
+{
+  float NoV = 1.0 - saturate(dot(normal, view));
+  return pow(NoV, strength);
+}
+
+
+
+float SoftenGrazingAngle(float3 normal, float3 view)
+{
+  float power = 2.0;
+  float fresnel = GetFresnel(normal, view, power);
+  
+  float a = InverseLerp_HyV(_GrazingAngleThreshold, 1.0, fresnel);
+  float depthOffset = (a * _GrazingAngleOffset) + 1;
+  
+  return depthOffset;
+}
+
+
+
+// Step 1.
+float GetNearestDepth01(float2 uv, float2 texelSize, float offset)
+{
+  // Return nearest depth
+  
+  // Sample 9-box: ul,um,ur, cl,cm,cr, dl,dm,dr
+  float ul = SampleDepth(uv + float2(-texelSize.x, texelSize.y) * offset);
+  float um = SampleDepth(uv + float2(0, texelSize.y) * offset);
+  float ur = SampleDepth(uv + float2(texelSize.x, texelSize.y) * offset);
+  
+  float cl = SampleDepth(uv + float2(-texelSize.x, 0) * offset);
+  float cm = SampleDepth(uv + float2(0, 0) * offset);
+  float cr = SampleDepth(uv + float2(texelSize.x, 0) * offset);
+  
+  float dl = SampleDepth(uv + float2(-texelSize.x, -texelSize.y) * offset);
+  float dm = SampleDepth(uv + float2(0, -texelSize.y) * offset);
+  float dr = SampleDepth(uv + float2(texelSize.x, -texelSize.y) * offset);
+  
+  // Note that Unity uses a reversed z, where near = 1 and far = 0.
+  // [1,0] = [near, far], so the nearest depth is actually the max depth.
+//return min(ul, min(um, min(ur, min(cl, min(cm, min(cr, min(dl, min(dm, dr))))))));
+  return max(ul, max(um, max(ur, max(cl, max(cm, max(cr, max(dl, max(dm, dr))))))));
+}
+
+
+// Step 2.
+float GetOutlineThickness(float depth, float minThickness, float maxThickness, float minDistance, float maxDistance)
+{
+  // Return mapped thickness.
+  return Remap_HyV(minDistance, maxDistance, minThickness, maxThickness, depth);
+}
+
+
+// Step 3.
+float GetOutlineFade(float depth, float minFade, float maxFade, float minDistance, float maxDistance)
+{
+  // Return mapped fade.
+  return Remap_HyV(minDistance, maxDistance, minFade, maxFade, depth);
+}
+
+// Step 4.
+float GetDepthSamples(float2 uv, float2 texelSize, float offset, float3 normal, float3 view)
+{
+  float ul = LinearEyeDepth(SampleDepth(uv + float2(-texelSize.x, texelSize.y) * offset), _ZBufferParams);
+  float um = LinearEyeDepth(SampleDepth(uv + float2(0, texelSize.y) * offset), _ZBufferParams);
+  float ur = LinearEyeDepth(SampleDepth(uv + float2(texelSize.x, texelSize.y) * offset), _ZBufferParams);
+  
+  float cl = LinearEyeDepth(SampleDepth(uv + float2(-texelSize.x, 0) * offset), _ZBufferParams);
+  float cm = LinearEyeDepth(SampleDepth(uv + float2(0, 0) * offset), _ZBufferParams);
+  float cr = LinearEyeDepth(SampleDepth(uv + float2(texelSize.x, 0) * offset), _ZBufferParams);
+  
+  float dl = LinearEyeDepth(SampleDepth(uv + float2(-texelSize.x, -texelSize.y) * offset), _ZBufferParams);
+  float dm = LinearEyeDepth(SampleDepth(uv + float2(0, -texelSize.y) * offset), _ZBufferParams);
+  float dr = LinearEyeDepth(SampleDepth(uv + float2(texelSize.x, -texelSize.y) * offset), _ZBufferParams);
+  
+//Demonstrating for comparison -- intentionally excluding center middle.
+//float averageDepth = (ul + um + ur + cl + cm + cr + dl + dm + dr);
+  float averageDepth = (ul + um + ur + cl + cr + dl + dm + dr) * 0.125;
+  
+  float t = averageDepth - cm;
+  
+  float n0 = ul - dr;
+  float n1 = ur - dl;
+  float n2 = cl - cr;
+  float n3 = um - dm;
+  
+  //t = sqrt(dot(n0, n0) + dot(n1, n1) + dot(n2, n2) + dot(n3, n3)) * 0.5;
+  
+  float threshold = _DepthThreshold * SoftenGrazingAngle(normal, view);
+  float a = max(threshold - _DepthSoftness, 0);
+  float b = max(threshold + _DepthSoftness, 0);
+  return saturate(smoothstep(a, b, t));
+}
+
+// Step 4.
+float GetNormalSamples(float2 uv, float2 texelSize, float offset)
+{
+  float3 ul = SampleNormals(uv + float2(-texelSize.x, texelSize.y) * offset);
+  float3 um = SampleNormals(uv + float2(0, texelSize.y) * offset);
+  float3 ur = SampleNormals(uv + float2(texelSize.x, texelSize.y) * offset);
+  
+  float3 cl = SampleNormals(uv + float2(-texelSize.x, 0) * offset);
+  float3 cm = SampleNormals(uv + float2(0, 0) * offset);
+  float3 cr = SampleNormals(uv + float2(texelSize.x, 0) * offset);
+  
+  float3 dl = SampleNormals(uv + float2(-texelSize.x, -texelSize.y) * offset);
+  float3 dm = SampleNormals(uv + float2(0, -texelSize.y) * offset);
+  float3 dr = SampleNormals(uv + float2(texelSize.x, -texelSize.y) * offset);
+  
+  // Conduct a Robert's Cross...
+  
+  float3 n0 = ul - dr;
+  float3 n1 = ur - dl;
+  float3 n2 = cl - cr;
+  float3 n3 = um - dm;
+  
+  float t = sqrt(dot(n0, n0) + dot(n1, n1) + dot(n2, n2) + dot(n3, n3)) * 0.25;
+  float a = max(_NormalThreshold - _NormalSoftness, 0);
+  float b = max(_NormalThreshold + _NormalSoftness, 0);
+  return saturate(smoothstep(a, b, t));
+}
+
+// Step 4.
+float GetLumaSamples(float2 uv, float2 texelSize, float offset)
+{
+  float ul = SampleLuma(uv + float2(-texelSize.x, texelSize.y) * offset);
+  float um = SampleLuma(uv + float2(0, texelSize.y) * offset);
+  float ur = SampleLuma(uv + float2(texelSize.x, texelSize.y) * offset);
+  
+  float cl = SampleLuma(uv + float2(-texelSize.x, 0) * offset);
+  float cm = SampleLuma(uv + float2(0, 0) * offset);
+  float cr = SampleLuma(uv + float2(texelSize.x, 0) * offset);
+  
+  float dl = SampleLuma(uv + float2(-texelSize.x, -texelSize.y) * offset);
+  float dm = SampleLuma(uv + float2(0, -texelSize.y) * offset);
+  float dr = SampleLuma(uv + float2(texelSize.x, -texelSize.y) * offset);
+  
+  
+  // Conduct a Robert's Cross...
+  
+  float n0 = ul - dr;
+  float n1 = ur - dl;
+  float n2 = cl - cr;
+  float n3 = um - dm;
+  
+  float t = sqrt(dot(n0, n0) + dot(n1, n1) + dot(n2, n2) + dot(n3, n3)) * 0.5;
+  float a = max(_LumaThreshold - _LumaSoftness, 0);
+  float b = max(_LumaThreshold + _LumaSoftness, 0);
+  return saturate(smoothstep(a, b, t));
+}
+
+
+// Step 4.
+float GetColorSamples(float2 uv, float2 texelSize, float offset)
+{
+  float2 ul = SampleHueSaturation(uv + float2(-texelSize.x, texelSize.y) * offset);
+  float2 um = SampleHueSaturation(uv + float2(0, texelSize.y) * offset);
+  float2 ur = SampleHueSaturation(uv + float2(texelSize.x, texelSize.y) * offset);
+  
+  float2 cl = SampleHueSaturation(uv + float2(-texelSize.x, 0) * offset);
+  float2 cm = SampleHueSaturation(uv + float2(0, 0) * offset);
+  float2 cr = SampleHueSaturation(uv + float2(texelSize.x, 0) * offset);
+  
+  float2 dl = SampleHueSaturation(uv + float2(-texelSize.x, -texelSize.y) * offset);
+  float2 dm = SampleHueSaturation(uv + float2(0, -texelSize.y) * offset);
+  float2 dr = SampleHueSaturation(uv + float2(texelSize.x, -texelSize.y) * offset);
+  
+  // Conduct a Robert's Cross...
+  
+  float2 n0 = ul - dr;
+  float2 n1 = ur - dl;
+  float2 n2 = cl - cr;
+  float2 n3 = um - dm;
+  
+  float t = sqrt(dot(n0, n0) + dot(n1, n1) + dot(n2, n2) + dot(n3, n3)) * 0.5;
+  float a = max(_ColorThreshold - _ColorSoftness, 0);
+  float b = max(_ColorThreshold + _ColorSoftness, 0);
+  return saturate(smoothstep(a, b, t));
+}
+
+
+
+// Step 5
+float GetEdge(float depth, float normal, float luma, float color)
+{
+  return max(depth, max(normal, max(luma, color)));
+}
+
+
+// Step 6
+float3 SetColor(float edge, float3 sceneColor)
+{
+  return lerp(sceneColor, _OutlineColor.rgb, edge * _OutlineColor.a);
+}
+
+/*
+1. Find the Nearest Depth. (Check each direction at Maximum Thickness).
+   => Answers the question: "Which object does this outline belong to?"
+2. Map the outline thickness to a range based on the Distance %. => Gives you "Thickness".
+3. Map the outline fade to a range based on the Distance %. => Gives you "Alpha".
+4. Take the Depth and Normal Edges.
+5. Detect edges with the Depth and Normal Samples. => Gives you "Edge".
+
+Bonus Points: 
+- Sample Color at Minimum Depth as Color Modulator).
+- Prevent grazing angle artifacts with Depth sampling.
+*/
+
+float _MaximumOutlineThickness;
+Texture2D _PaperTexture;
+float _PaperTextureScale;
+float _PaperTextureSpeed;
+float _PaperTextureStrength;
+float _PaperExcludeSkybox;
+float _OutlineExcludeSkybox;
+float _OffsetExcludeSkybox;
+
+#pragma multi_compile _ _DEPTH_OUTLINE_ON
+#pragma multi_compile _ _NORMAL_OUTLINE_ON
+#pragma multi_compile _ _LUMA_OUTLINE_ON
+#pragma multi_compile _ _COLOR_OUTLINE_ON
+
+[numthreads(_ThreadSize, _ThreadSize,1)]
+void ComputeOutlines(uint3 id : SV_DispatchThreadID)
+{
+  if (id.x >= uint(_ScreenSizePx.x) || id.y >= uint(_ScreenSizePx.y))
+    return;
+  
+  // Function
+  float2 texelSize = GetTexelSize();
+  float2 uv = GetUV(id, texelSize);
+  
+  float depth01 = GetNearestDepth01(uv, texelSize, max(_NearThickness01, _FarThickness01) * _MaximumOutlineThickness);
+  
+  float d = SampleDepth(uv);
+  if (_OutlineExcludeSkybox == 1 && d <= 1e-6)
+  {
+    _OutlineTarget[id.xy] = 0;
+    return;
+  }
+  
+  float3 sceneColor = SampleColor(uv).rgb;
+  
+  float depth = LinearEyeDepth(depth01, _ZBufferParams);
+  float thickness = GetOutlineThickness(depth, _NearThickness01, _FarThickness01, _DistanceStart, _DistanceEnd);
+  float fade = GetOutlineFade(depth, _NearAlpha, _FarAlpha, _DistanceStart, _DistanceEnd);
+  thickness *= _MaximumOutlineThickness;
+  
+  
+  float depthEdge, normalEdge, lumaEdge, colorEdge;
+  depthEdge = 0;
+  normalEdge = 0;
+  lumaEdge = 0;
+  colorEdge = 0;
+  
+#if _DEPTH_OUTLINE_ON
+  float3 viewDirVS = mul(unity_CameraInvProjection, float4(uv * 2 - 1, 0.0, -1)).xyz;
+  float3 viewDirWS = mul(unity_CameraToWorld, float4(viewDirVS.xyz, 0)).xyz;
+  viewDirWS = -viewDirWS;
+  viewDirWS = normalize(viewDirWS);
+  float3 normal = SampleNormals(uv);
+  
+  depthEdge = GetDepthSamples(uv, texelSize, thickness * _DepthThickness01, normal, viewDirWS);
+#endif
+  
+#if _NORMAL_OUTLINE_ON
+  normalEdge = GetNormalSamples(uv, texelSize, thickness * _NormalThickness01);
+#endif
+  
+#if _LUMA_OUTLINE_ON
+  lumaEdge = GetLumaSamples(uv, texelSize, thickness * _LumaThickness01);
+#endif
+  
+#if _COLOR_OUTLINE_ON
+  colorEdge = GetColorSamples(uv, texelSize, thickness * _ColorThickness01);
+#endif  
+
+  float edge = GetEdge(depthEdge, normalEdge, lumaEdge, colorEdge);
+  edge = smoothstep(_EdgeThreshold, 1.0, edge);
+  
+  _OutlineTarget[id.xy] = (edge * fade).x;
+}
+
+#pragma multi_compile _ _PAPER_ON
+#pragma multi_compile _ _OFFSET_ON
+#pragma multi_compile _ _BLUR_ON
+#pragma multi_compile _ _BLUR_NOISE_ON
+
+float _BlurAmount;
+float _FrameRate;
+float _InverseFrameRate;
+
+
+[numthreads(_ThreadSize, _ThreadSize, 1)]
+void DrawOutlines(uint3 id : SV_DispatchThreadID)
+{
+  if (id.x >= uint(_ScreenSizePx.x) || id.y >= uint(_ScreenSizePx.y))
+    return;
+  
+  float2 texelSize = GetTexelSize();
+  float2 uv = GetUV(id, texelSize);
+  float3 sceneColor = SampleColor(uv).rgb;
+  
+  float2 offset = 0;
+  float paperResult = 1.0;
+  
+  float t = _Time.y;
+  
+  if (_FrameRate > 0)
+  {
+    t = floor(_Time.y * _FrameRate) * _InverseFrameRate;
+  }
+  
+  #if _PAPER_ON || _OFFSET_ON
+  float depth = SampleDepth(uv);
+  float3 positionVS = GetPositionViewSpace(uv, depth);
+  float3 positionWS = GetPositionWorldSpace(positionVS);
+  
+  #if _OFFSET_ON
+  offset = _OffsetTexture.SampleLevel(my_linear_repeat_sampler, positionWS.xz * _TextureScale + t * _TextureSpeed, 0).xy * 2 - 1;
+  offset *= texelSize * _TextureOffset;
+  
+  if(_OffsetExcludeSkybox == 1 && depth <= 1e-6)
+  {
+    offset = 0;
+  }
+  #endif
+  
+  #if _PAPER_ON
+  float paper = _PaperTexture.SampleLevel(my_linear_repeat_sampler, positionWS.xz * _PaperTextureScale + t * _PaperTextureSpeed, 0).r;
+  
+  if (_PaperExcludeSkybox == 1 && depth <= 1e-6)
+  {
+    paper = 1.;
+  }
+  
+  paperResult = lerp(1.0, paper, _PaperTextureStrength);
+  #endif
+  
+  #endif
+  
+  if (_PreviewOutlines)
+  {
+    sceneColor = float3(1, 1, 1);
+  }
+  
+  float edge = 1.0;
+
+  
+  #if _BLUR_ON
+  #if _BLUR_NOISE_ON
+  //_BlurAmount *= IGN(id.x, id.y, _FrameId);
+  #endif
+  float a = _OutlineTargetResource.SampleLevel(my_linear_mirror_sampler, uv + offset + float2(-texelSize.x, texelSize.y) * _BlurAmount, 0).r;
+  float b = _OutlineTargetResource.SampleLevel(my_linear_mirror_sampler, uv + offset + float2(texelSize.x, texelSize.y) * _BlurAmount, 0).r;
+  float c = _OutlineTargetResource.SampleLevel(my_linear_mirror_sampler, uv + offset + float2(-texelSize.x, -texelSize.y) * _BlurAmount, 0).r;
+  float d = _OutlineTargetResource.SampleLevel(my_linear_mirror_sampler, uv + offset + float2(texelSize.x, -texelSize.y) * _BlurAmount, 0).r;
+  edge = (a + b + c + d) * 0.25;
+  #else
+  edge = _OutlineTargetResource.SampleLevel(my_linear_mirror_sampler, uv + offset, 0).r;
+  #endif
+  _OutlineDrawTarget[id.xy] = SetColor(edge * paperResult, sceneColor) * paperResult;
+  //_OutlineDrawTarget[id.xy] = offset.xxx;
+  
+}

@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.occasoftware.altos": {
-      "version": "file:E:/Unity/Assets/altos-v7.13.0/OccaSoftware-altos-5414575fc310eb46b080b89f5e03e2b58bcb5e9a",
+      "version": "file:altos-v7.13.0/OccaSoftware-altos-5414575fc310eb46b080b89f5e03e2b58bcb5e9a",
       "depth": 0,
       "source": "local",
       "dependencies": {
@@ -10,7 +10,7 @@
       }
     },
     "com.occasoftware.buto": {
-      "version": "file:E:/Unity/Assets/buto-v7.11.2/OccaSoftware-buto-ab30e95ee6950f86fe6b72feceb70fc2435f8b62",
+      "version": "file:buto-v7.11.2/OccaSoftware-buto-ab30e95ee6950f86fe6b72feceb70fc2435f8b62",
       "depth": 0,
       "source": "local",
       "dependencies": {
@@ -18,19 +18,19 @@
       }
     },
     "com.occasoftware.fluff": {
-      "version": "file:E:/Unity/Assets/fluff-v2.0.0/OccaSoftware-fluff-c386e84f124772b6552102719d2bc271da598943",
+      "version": "file:fluff-v2.0.0/OccaSoftware-fluff-c386e84f124772b6552102719d2bc271da598943",
       "depth": 0,
       "source": "local",
       "dependencies": {}
     },
     "com.occasoftware.outlines": {
-      "version": "file:E:/Unity/Assets/outlines-v1.0.0/OccaSoftware-outlines-17a1be18c482ea6cdc0c9c74ff6bd89bfda1950e",
+      "version": "file:outlines-v1.0.0/OccaSoftware-outlines-17a1be18c482ea6cdc0c9c74ff6bd89bfda1950e",
       "depth": 0,
       "source": "local",
       "dependencies": {}
     },
     "com.occasoftware.toon-kit-2": {
-      "version": "file:E:/Unity/Assets/toon-kit-2-v2.1.3/OccaSoftware-toon-kit-2-d8ec50c6562782b9801093878d655282abfb90c6",
+      "version": "file:toon-kit-2-v2.1.3/OccaSoftware-toon-kit-2-d8ec50c6562782b9801093878d655282abfb90c6",
       "depth": 0,
       "source": "local",
       "dependencies": {

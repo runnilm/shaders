@@ -1,0 +1,257 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Torus Knot
+  m_Shader: {fileID: -6465566751694194690, guid: e77111046b851ae47b57003f367ef054,
+    type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _SCREEN_SPACE_OCCLUSION
+  m_InvalidKeywords:
+  - BOOLEAN_27296089_ON
+  - BOOLEAN_74AD49CB_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2000
+  stringTagMap:
+    RenderType: Opaque
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - Texture2D_292A4322:
+        m_Texture: {fileID: 2800000, guid: 90b387755a17ee84fb59a1dc6a5304b0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_2FCA53F8:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_93AE646C:
+        m_Texture: {fileID: 2800000, guid: f32e707cb33ca68498720d618be800c2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_CFB56B0A:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_E97A8D7F:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Emission_Map:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OpacityTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RoughnessMap:
+        m_Texture: {fileID: 2800000, guid: bd177e0ee533e71478e174c654412936, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_55353A41_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 59c8de363dc14c54986d0751c2c38342, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_9578832_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 442e6933888925c48b05d56bcfba9809, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_9D6108CF_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 0db17313f81d00b4991b7ccc6c28fffc, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_FDDA2F48_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 5e98de278b2ccc14f89b76b85596a3f3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecularDabTexture:
+        m_Texture: {fileID: 2800000, guid: 03bb74557b77ce04781550aa2a9993d1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture2DAsset_BEF85C1_Out_0:
+        m_Texture: {fileID: 10300, guid: 0000000000000000f000000000000000, type: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - BOOLEAN_20A2BDA1: 0
+    - BOOLEAN_27296089: 1
+    - BOOLEAN_562A3BA2: 1
+    - BOOLEAN_7188B8F1: 0
+    - BOOLEAN_74AD49CB: 1
+    - BOOLEAN_797A78DA: 0
+    - Boolean_31CCE875: 1
+    - Boolean_F7BE8539: 1
+    - Vector1_16D642D1: 0
+    - Vector1_1DD45D74: 1
+    - Vector1_41AC1DD: 1
+    - Vector1_6986C975: 0.1
+    - Vector1_704BC890: 0.39
+    - Vector1_71C717B2: 0
+    - Vector1_75A29695: 0
+    - Vector1_7E42FC8C: 0.42
+    - Vector1_93F61CE2: 4
+    - Vector1_A7ED927A: 10
+    - Vector1_AFE2FE6: 0.15
+    - Vector1_B0C56F42: 0.591
+    - Vector1_C0DB77FC: 1
+    - Vector1_E0A63449: 1
+    - Vector1_E5396CBA: 0
+    - Vector1_E594399F: 0
+    - Vector1_F222C338: 1.5
+    - _AOEnabled: 1
+    - _AOStrength: 0.26
+    - _AOToonShadingEnabled: 0
+    - _AdditionalLightToonShadingEnabled: 0
+    - _AdditionalLightToonShadingThreshold: 0.3
+    - _Additional_Light_Toon_Shading_Enabled: 0
+    - _Additional_Light_Toon_Shading_Threshold: 0
+    - _AlphaClip: 0
+    - _AlphaClipThreshold: 0.328
+    - _AlphaToMask: 0
+    - _AmbientLightStrength: 1
+    - _AmbientOcclusionEnabled: 1
+    - _Ambient_Occlusion_Intensity: 0
+    - _Ambient_Occusion_Toon_Shading_Enabled: 0
+    - _Blend: 0
+    - _BlendMode: 1
+    - _Boolean: 0
+    - _BumpScale: 1
+    - _CastShadows: 1
+    - _Cull: 2
+    - _CustomColorsEnabled: 1
+    - _Cutoff: 0.5
+    - _DebugViewState: 0
+    - _DstBlend: 0
+    - _Emissive: 0
+    - _EnvironmentReflections: 1
+    - _FogEnabled: 1
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
+    - _HasNormalMap: 0
+    - _LightingMode: 1
+    - _MainLightSoftness: 0
+    - _Metallic: 0
+    - _Midpoint: 0.54
+    - _MidpointStrength: 0.657
+    - _Midpoint_Strength: 0.5
+    - _NormalStrength: 1
+    - _OcclusionStrength: 1
+    - _Opacity: 1
+    - _OverlayModeEnabled: 1
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _ReceiveAdditionalLights: 0
+    - _ReceiveShadows: 1
+    - _RimLightingEnabled: 1
+    - _RimThreshold: 0.799
+    - _RoughnessAmount: 0.496
+    - _SCREEN_SPACE_OCCLUSION: 1
+    - _Smoothness: 0.5
+    - _SmoothnessTextureChannel: 0
+    - _SpecularColorAmount: 0
+    - _SpecularDabRotation: 0.263
+    - _SpecularDabScale: 50
+    - _SpecularHighlights: 1
+    - _SpecularHighlightsEnabled: 1
+    - _SpecularRoughnessAmount: 0
+    - _SrcBlend: 1
+    - _Surface: 0
+    - _ViewState: 0
+    - _WorkflowMode: 1
+    - _ZTest: 4
+    - _ZWrite: 1
+    - _ZWriteControl: 0
+    m_Colors:
+    - Color_268D2273: {r: 0.2924528, g: 0.2924528, b: 0.2924528, a: 0}
+    - Color_505A8FDF: {r: 0, g: 0, b: 0, a: 1}
+    - Color_80F92342: {r: 0, g: 0, b: 0, a: 1}
+    - Color_87594BF8: {r: 1, g: 1, b: 1, a: 1}
+    - Color_C0AD5F7B: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color_Lit: {r: 1, g: 1, b: 1, a: 0}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Emission_Color: {r: 0, g: 0, b: 0, a: 0}
+    - _LitColor: {r: 1, g: 1, b: 1, a: 0}
+    - _MainColor: {r: 0.40787098, g: 0.5555485, b: 0.872, a: 0.33333334}
+    - _RimColor: {r: 1, g: 1, b: 1, a: 0}
+    - _ShadowColor: {r: 0, g: 0, b: 0, a: 0}
+    - _ShadowTint: {r: 0, g: 0, b: 0, a: 0}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 1, g: 1, b: 1, a: 0}
+  m_BuildTextureStacks: []
+--- !u!114 &4494370453584649740
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 7

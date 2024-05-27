@@ -1,0 +1,14 @@
+{
+    "name": "OccaSoftware.ToonKit2.Shaders",
+    "rootNamespace": "OccaSoftware.ToonKit2.Shaders",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,17 @@
+{
+  "displayName": "Toon Kit 2",
+  "name": "com.occasoftware.toon-kit-2",
+  "version": "2.1.3",
+  "unity": "2022.3",
+  "description": "Toon Kit 2 is a toon shader designed for Unity URP.",
+  "author": {
+    "name": "OccaSoftware",
+    "email": "hello@occasoftware.com",
+    "url": "https://www.occasoftware.com/"
+  },
+  "documentationUrl": "https://occasoftware.com/manual/toon-kit-2",
+  "unityRelease": "0f1",
+  "dependencies": {
+    "com.unity.shadergraph": "14.0.7"
+  }
+}
