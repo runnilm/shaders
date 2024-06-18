@@ -21,8 +21,8 @@ float _IntegrationRate;
 // Returns % between start and stop
 float InverseLerp(float start, float stop, float value)
 {
-    float x = (value - start) / (stop - start);
-    return clamp(x, start, stop);
+  float x = (value - start) / (stop - start);
+  return saturate(x);
 }
 
 float buto_Remap(float inStart, float inStop, float outStart, float outStop, float v)
@@ -34,13 +34,13 @@ float buto_Remap(float inStart, float inStop, float outStart, float outStop, flo
 
 float InverseLerp0N(float stop, float value)
 {
-    return clamp(value / stop, 0, stop);
+  return clamp(value / stop, 0, stop);
 }
 
 
 float Remap0N(float inStop, float outStart, float outStop, float v)
 {
-    float t = v / inStop;
+  float t = v / inStop;
 	return lerp(outStart, outStop, saturate(t));
 }
 

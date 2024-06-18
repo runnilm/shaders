@@ -235,15 +235,16 @@ void GetMainLightData(float3 PositionWS, out Light light)
     light = GetMainLight(shadowCoord);
 }
 
-void GetAdditionalLightData(float3 PositionWS, float3 NormalWS, float height, out float3 Color)
+void GetAdditionalLightData(float3 PositionWS, float3 NormalWS, float height, out float3 col)
 {
+    col = 0;
     int count = GetAdditionalLightsCount();
 	for (int i = 0; i < count; i++)
     {
 		Light light = GetAdditionalLight(i, PositionWS);
         float3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
         float3 adjustedNormal = CalculateAdjustedNormal(light.direction, height, NormalWS); // Readjusts normal to face the light source
-		Color += attenuatedLightColor * saturate(dot(light.direction, adjustedNormal));
+		col += attenuatedLightColor * saturate(dot(light.direction, adjustedNormal));
 	}
 }
 

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [Changelog also available online](https://www.occasoftware.com/changelogs/buto)
 
+## [7.11.3] - 2024-05-27
+
+### Fixed
+
+- Fixed issue with value remapping
 
 ## [7.11.2] - 2024-02-12
 
@@ -20,7 +25,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Fixed spot light issue.
 - Fixed editor gizmos for spot and area lights.
-
 
 ## [7.11.0] - 2024-02-08
 

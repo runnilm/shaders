@@ -1,7 +1,7 @@
 {
   "displayName": "Fluff",
   "name": "com.occasoftware.fluff",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "packageType": "package",
   "unity": "2022.3",
   "description": "Shell-based grass shader",
@@ -10,6 +10,7 @@
     "email": "hello@occasoftware.com",
     "url": "https://www.occasoftware.com/"
   },
+  "hideInEditor": false,
   "documentationUrl": "https://docs.occasoftware.com/",
   "unityRelease": "0f1"
 }
